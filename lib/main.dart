@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:wini_web/login_page.dart';
 import 'package:wini_web/home_page.dart';
-import 'package:wini_web/tab_page.dart';
+import 'package:wini_web/socket_io.dart';
 
 void main() {
+  WiniIO.connect();
   runApp(const MyApp());
 }
 
@@ -33,49 +35,50 @@ class MyApp extends StatelessWidget {
 }
 
 enum RoutePage {
+  login,
   home,
-  tab,
   unknow,
 }
 
 class MyRouteConfig {
   final RoutePage pathName;
+  final String? socketId;
   final Object? data;
 
-  MyRouteConfig({this.pathName = RoutePage.home, this.data});
+  MyRouteConfig({this.pathName = RoutePage.login, this.data, this.socketId});
 
   MyRouteConfig.unKown()
       : pathName = RoutePage.unknow,
-        data = null;
+        data = null,
+        socketId = null;
 }
 
 class MyRouteInformationParser extends RouteInformationParser<MyRouteConfig> {
   @override
   Future<MyRouteConfig> parseRouteInformation(RouteInformation routeInformation) async {
-    final String routeName = routeInformation.location ?? '';
-    var socketId = RegExp(r'/socketId=[a-zA-Z0-9]$');
-    if (socketId.hasMatch(routeName)) {
-      return MyRouteConfig(data: PageData(routeName.substring(routeName.indexOf('socketId=') + 10)));
+    final String routeName = routeInformation.location ?? '/';
+    final Uri uri = Uri.parse(routeName);
+    if (routeName == '' || uri.pathSegments.isEmpty) {
+      return MyRouteConfig.unKown();
+    } else if (routeName.contains('login')) {
+      return MyRouteConfig(
+          pathName: RoutePage.login, socketId: uri.queryParameters['socketId'], data: routeInformation.state);
+    } else if (routeName.contains('home')) {
+      return MyRouteConfig(pathName: RoutePage.home, data: routeInformation.state);
     } else {
-      if (routeName == '') {
-        return MyRouteConfig.unKown();
-      } else if (routeName == '/') {
-        return MyRouteConfig();
-      }
-      {
-        return MyRouteConfig(
-            pathName: RoutePage.values.firstWhere((route) => '/$route' == routeName), data: routeInformation.state);
-      }
+      throw 'unknow';
     }
   }
 
   @override
   RouteInformation? restoreRouteInformation(MyRouteConfig configuration) {
     switch (configuration.pathName) {
+      case RoutePage.login:
+        return RouteInformation(location: '/login?socketId=${configuration.socketId ?? "lalala"}');
       case RoutePage.home:
-        return const RouteInformation(location: '/');
+        return const RouteInformation(location: '/home');
       default:
-        return RouteInformation(location: '/${configuration.pathName}', state: configuration.data);
+        throw 'unknow';
     }
   }
 }
@@ -88,6 +91,7 @@ class MyRouteDelegate extends RouterDelegate<MyRouteConfig>
   MyRouteConfig? _configuration;
 
   set myRouteConfig(MyRouteConfig value) {
+    if (_configuration?.pathName == RoutePage.home) {}
     if (_configuration?.pathName == value.pathName) return;
     _configuration = value;
     notifyListeners();
@@ -106,18 +110,23 @@ class MyRouteDelegate extends RouterDelegate<MyRouteConfig>
     return Navigator(
       key: navigatorKey,
       pages: <Page>[
-        const MaterialPage(
-          key: ValueKey('home'),
-          child: MyHomePage(),
-        ),
-        if (_configuration?.pathName == RoutePage.tab)
+        if (GoogleService.user == null)
+          MaterialPage(
+            key: const ValueKey('login_page'),
+            child: LoginPage(socketId: _configuration?.socketId),
+          ),
+        if (GoogleService.user != null)
           const MaterialPage(
-            key: ValueKey('tab'),
-            child: TabView(),
+            key: ValueKey('home_page'),
+            child: HomePage(),
           ),
       ],
       onPopPage: (route, result) {
-        if (!route.didPop(result)) return false;
+        if (_configuration!.pathName == RoutePage.home) {
+          return false;
+        } else if (!route.didPop(result)) {
+          return false;
+        }
         notifyListeners();
 
         return true;
