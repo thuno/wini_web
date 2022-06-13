@@ -9,7 +9,7 @@ class GoogleService {
     // clientId: '479882132969-9i9aqik3jfjd7qhci1nqf0bm2g71rm1u.apps.googleusercontent.com',
     scopes: <String>[
       'email',
-      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/contacts.readonly',
     ],
   );
 
@@ -45,18 +45,22 @@ class _LoginPageState extends State<LoginPage> {
     // );
     // final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
     print(widget.socketId);
-    final GoogleSignInAccount? googleUser = await GoogleService.googleSignIn.signIn();
-    GoogleService.user = googleUser;
-    final GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
-    if (widget.socketId != null) {
-      WiniIO.emitGoogle(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-        socketId: widget.socketId,
-      );
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleService.googleSignIn.signIn();
+      GoogleService.user = googleUser;
+      final GoogleSignInAuthentication googleAuth = await googleUser!.authentication;
+      if (widget.socketId != null) {
+        WiniIO.emitGoogle(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+          socketId: widget.socketId,
+        );
+      }
+      (Router.of(context).routerDelegate as MyRouteDelegate).myRouteConfig =
+          MyRouteConfig(pathName: RoutePage.home, socketId: widget.socketId);
+    } catch (e) {
+      print(e);
     }
-    (Router.of(context).routerDelegate as MyRouteDelegate).myRouteConfig =
-        MyRouteConfig(pathName: RoutePage.home, socketId: widget.socketId);
   }
 
   @override

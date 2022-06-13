@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:wini_web/login_page.dart';
 import 'package:wini_web/home_page.dart';
 import 'package:wini_web/socket_io.dart';
+import 'package:wini_web/test_sms.dart';
 
 void main() {
   WiniIO.connect();
@@ -17,7 +18,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp.router(
       routeInformationParser: MyRouteInformationParser(),
       routerDelegate: MyRouteDelegate(),
-      title: 'Flutter Demo',
+      title: 'wini_web',
       theme: ThemeData(
         // This is the theme of your application.
         //
@@ -110,16 +111,20 @@ class MyRouteDelegate extends RouterDelegate<MyRouteConfig>
     return Navigator(
       key: navigatorKey,
       pages: <Page>[
-        if (GoogleService.user == null)
-          MaterialPage(
-            key: const ValueKey('login_page'),
-            child: LoginPage(socketId: _configuration?.socketId),
-          ),
-        if (GoogleService.user != null)
-          const MaterialPage(
-            key: ValueKey('home_page'),
-            child: HomePage(),
-          ),
+        // if (GoogleService.user == null)
+        //   MaterialPage(
+        //     key: const ValueKey('login_page'),
+        //     child: LoginPage(socketId: _configuration?.socketId),
+        //   ),
+        // if (GoogleService.user != null)
+        //   const MaterialPage(
+        //     key: ValueKey('home_page'),
+        //     child: HomePage(),
+        //   ),
+        const MaterialPage(
+          key: ValueKey('home_page'),
+          child: ReadSMS(),
+        ),
       ],
       onPopPage: (route, result) {
         if (_configuration!.pathName == RoutePage.home) {
@@ -133,9 +138,4 @@ class MyRouteDelegate extends RouterDelegate<MyRouteConfig>
       },
     );
   }
-}
-
-class PageData {
-  final String? socketId;
-  PageData(this.socketId);
 }

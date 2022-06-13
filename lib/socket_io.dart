@@ -26,7 +26,6 @@ class WiniIO {
   }
 
   static void emitGoogle({String? accessToken, String? idToken, String? socketId}) {
-    print('client-google');
     socket.emit('client-google', {
       "url": 'Customer/GoogleCallback?accesstoken=$accessToken&token=$idToken',
       "data": null,

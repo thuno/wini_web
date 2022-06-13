@@ -39,6 +39,7 @@ dev_dependencies:
   google_sign_in: ^5.3.2
   socket_io_client: ^1.0.2  
   web_socket_channel: ^2.1.0
+  sms_advanced: ^1.0.1
   flutter_test:
     sdk: flutter
 
